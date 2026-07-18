@@ -1,9 +1,10 @@
 import Database from "better-sqlite3";
 import path from "path";
+import fs from "fs";
 
-const dbPath = process.env.RAILWAY_VOLUME_MOUNT_PATH
-  ? path.join(process.env.RAILWAY_VOLUME_MOUNT_PATH, "euphoria.db")
-  : path.join(process.cwd(), "euphoria.db");
+const dbDir = process.env.RAILWAY_VOLUME_MOUNT_PATH || process.cwd();
+if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
+const dbPath = path.join(dbDir, "euphoria.db");
 const db = new Database(dbPath);
 
 // WAL — быстрее и надёжнее при одновременных запросах
