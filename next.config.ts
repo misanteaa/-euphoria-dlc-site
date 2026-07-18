@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // better-sqlite3 — нативный модуль, его нельзя бандлить, помечаем как external
+  serverExternalPackages: ["better-sqlite3", "bcrypt"],
 };
 
 export default nextConfig;

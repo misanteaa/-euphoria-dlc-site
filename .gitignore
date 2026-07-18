@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# database
+prysm.db
+prysm.db-*
+*.db
+*.db-shm
+*.db-wal

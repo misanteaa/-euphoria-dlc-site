@@ -1,65 +1,182 @@
+"use client";
+
+import { useCallback, useState } from "react";
+import { motion } from "framer-motion";
 import Image from "next/image";
 
+import Loader from "@/components/Loader";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import Card from "@/components/Card";
+import GridBackground from "@/components/GridBackground";
+
+import {
+  Eye,
+  SlidersHorizontal,
+  Gauge,
+  ArrowsClockwise,
+} from "@phosphor-icons/react";
+
 export default function Home() {
+  const [ready, setReady] = useState(false);
+
+  const handleLoaderFinish = useCallback(() => {
+    setReady(true);
+  }, []);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <>
+      <Loader onFinished={handleLoaderFinish} />
+
+      {ready && (
+        <>
+          <Header />
+
+          <motion.main
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.7 }}
+            className="text-white relative z-10"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+            <section className="min-h-screen px-48 flex items-center relative">
+              <GridBackground className="absolute inset-0" />
+              <div className="relative z-[2] w-full flex items-center gap-20">
+                <motion.div
+                  initial={{ opacity: 0, y: 40 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.7 }}
+                  viewport={{ once: true }}
+                  className="w-1/2 pr-8"
+                >
+                  <h1 className="text-7xl font-extrabold leading-tight mb-6">
+                    О нас
+                  </h1>
+
+                  <p className="text-xl text-white/60 max-w-md mb-12">
+                    Мы создаём игровой клиент нового поколения, ориентированный
+                    на скорость, стабильность и премиальный пользовательский
+                    опыт. Больше FPS. Современные модули. Ноль отвлекающих
+                    факторов.
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-6 mb-14">
+                    <div>
+                      <p className="text-4xl font-bold">50+</p>
+                      <p className="text-white/50">Активные пользователи</p>
+                    </div>
+                    <div>
+                      <p className="text-4xl font-bold">30%+</p>
+                      <p className="text-white/50">Больше FPS</p>
+                    </div>
+                    <div>
+                      <p className="text-4xl font-bold">24/7</p>
+                      <p className="text-white/50">Поддержка</p>
+                    </div>
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.8 }}
+                  viewport={{ once: true }}
+                  className="w-1/2 flex justify-end"
+                >
+                  <Image
+                    src="/icon.png"
+                    alt="Hero"
+                    width={650}
+                    height={650}
+                    className="drop-shadow-[0_0_70px_rgba(255,40,150,0.45)] select-none"
+                  />
+                </motion.div>
+              </div>
+            </section>
+
+            <section className="min-h-screen flex items-center px-48 relative">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, x: -40 }}
+                whileInView={{ opacity: 1, scale: 1, x: 0 }}
+                transition={{ duration: 0.7 }}
+                viewport={{ once: true }}
+                className="w-1/2 flex justify-start relative"
+              >
+                <div className="-ml-24 rounded-2xl overflow-hidden shadow-2xl shadow-purple-500/20">
+                  <Image
+                    src="/chat.jpg"
+                    width={840}
+                    height={840}
+                    alt="Chat Screenshot"
+                    className="rounded-2xl"
+                  />
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7 }}
+                viewport={{ once: true }}
+                className="w-1/2 pl-20"
+              >
+                <h1 className="text-6xl font-extrabold mb-10">
+                  Наши преимущества
+                </h1>
+
+                <div className="grid grid-cols-2 gap-8">
+                  <Card
+                    icon={<Eye size={26} />}
+                    title="Beautiful Visuals"
+                    description="Чистые эффекты, отточенный интерфейс и современный стиль."
+                  />
+                  <Card
+                    icon={<SlidersHorizontal size={26} />}
+                    title="Fully Customizable"
+                    description="Настраивай модули, визуалы, интерфейс и эффекты именно так, как хочешь."
+                  />
+                  <Card
+                    icon={<Gauge size={26} />}
+                    title="High Performance"
+                    description="Плавный геймплей, оптимизированный FPS, стабильная работа."
+                  />
+                  <Card
+                    icon={<ArrowsClockwise size={26} />}
+                    title="Frequent Updates"
+                    description="Новые функции, улучшения и исправления багов на постоянной основе."
+                  />
+                </div>
+              </motion.div>
+            </section>
+
+            <section className="min-h-screen flex items-center justify-center px-48 relative">
+              <motion.div
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7 }}
+                viewport={{ once: true }}
+                className="w-full flex flex-col items-center justify-center"
+              >
+                <h1 className="text-6xl font-extrabold mb-12 text-center">
+                  Демонстрация геймплея
+                </h1>
+
+                <div className="w-full max-w-4xl rounded-2xl overflow-hidden shadow-2xl shadow-black/50">
+                  <iframe
+                    className="rounded-2xl w-full h-[450px]"
+                    src="https://www.youtube.com/embed/dQw4w9WgXcQ"
+                    title="Gameplay Video"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  ></iframe>
+                </div>
+              </motion.div>
+            </section>
+
+            <Footer />
+          </motion.main>
+        </>
+      )}
+    </>
   );
 }

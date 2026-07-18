@@ -1,0 +1,51 @@
+import { NextResponse } from "next/server";
+import bcrypt from "bcrypt";
+import db, { User } from "@/lib/db";
+
+export const dynamic = "force-dynamic";
+
+export async function POST(req: Request) {
+  try {
+    const { username, password } = await req.json();
+
+    if (!username || !password) {
+      return NextResponse.json(
+        { success: false, error: "Введите логин и пароль" },
+        { status: 400 }
+      );
+    }
+
+    const user = db
+      .prepare("SELECT * FROM users WHERE username = ?")
+      .get(username) as User | undefined;
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: "Неверный логин или пароль" },
+        { status: 401 }
+      );
+    }
+
+    const ok = await bcrypt.compare(password, user.password);
+    if (!ok) {
+      return NextResponse.json(
+        { success: false, error: "Неверный логин или пароль" },
+        { status: 401 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      uid: user.id,
+      username: user.username,
+      email: user.email,
+      role: user.role || "user",
+      subscription_end: user.subscription_end || null,
+    });
+  } catch {
+    return NextResponse.json(
+      { success: false, error: "Ошибка сервера" },
+      { status: 500 }
+    );
+  }
+}
