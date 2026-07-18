@@ -9,7 +9,6 @@ import Footer from "@/components/Footer";
 import {
   ArrowLeft,
   User,
-  Mail,
   ShieldCheck,
   Hash,
   CalendarBlank,
