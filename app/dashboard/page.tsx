@@ -232,7 +232,7 @@ export default function Dashboard() {
                   />
                   {hasSub ? (
                     <ActionCard
-                      href="https://drive.google.com/uc?export=download&id=1aTDsNJiaJVAYsJ7WYJUnR6PUQ0I7oMZV"
+                      href="/api/launcher-download"
                       icon={<DownloadSimple size={22} />}
                       title="Скачать лаунчер"
                       desc="Загрузить последнюю версию"
