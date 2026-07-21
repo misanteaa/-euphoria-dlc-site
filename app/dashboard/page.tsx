@@ -19,6 +19,7 @@ import {
   DownloadSimple,
   ArrowUpRight,
   ShieldCheck,
+  Shield,
   User,
 } from "@phosphor-icons/react";
 
@@ -29,6 +30,8 @@ type Me = {
   created_at: string;
   subscription_end: string | null;
   hwid: string | null;
+  role: string;
+  is_admin: number;
 } | null;
 
 // Простой стабильный хеш (для наглядного HWID из данных аккаунта)
@@ -81,6 +84,13 @@ export default function Dashboard() {
   const hasSub = subEnd && subEnd > now;
   const subStr = user ? (hasSub ? formatDate(subEnd) : "Нет подписки") : "—";
   const hwid = user?.hwid ?? "—";
+
+  const roleLabels: Record<string, string> = {
+    user: "Пользователь",
+    media: "Медиа",
+    tester: "Тестер",
+    admin: "Администратор",
+  };
 
   return (
     <>
@@ -143,7 +153,7 @@ export default function Dashboard() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/70">
                           <ShieldCheck size={14} />
-                          Пользователь
+                          {roleLabels[user?.role || "user"]}
                         </span>
                         <span className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/70">
                           <Hash size={14} />
@@ -226,6 +236,14 @@ export default function Dashboard() {
                     title="Скачать лаунчер"
                     desc="Загрузить последнюю версию"
                   />
+                  {user?.role === "admin" && (
+                    <ActionCard
+                      href="/dashboard/admin"
+                      icon={<Shield size={22} />}
+                      title="Админ панель"
+                      desc="Управление пользователями и ключами"
+                    />
+                  )}
                 </div>
               </div>
             </div>
