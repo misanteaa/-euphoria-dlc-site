@@ -1,27 +1,24 @@
-import { Pool } from "pg";
+import postgres from "postgres";
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
+const sql = postgres(process.env.DATABASE_URL || "", {
+  ssl: { rejectUnauthorized: false },
+  max: 10,
 });
 
-// Удобные обёртки над pool.query
 export async function query(text: string, params?: any[]) {
-  const result = await pool.query(text, params);
-  return result;
+  return await sql.unsafe(text, params ?? []);
 }
 
 export async function queryOne(text: string, params?: any[]) {
-  const result = await pool.query(text, params);
-  return result.rows[0] ?? null;
+  const rows = await sql.unsafe(text, params ?? []);
+  return rows[0] ?? null;
 }
 
 export async function queryAll(text: string, params?: any[]) {
-  const result = await pool.query(text, params);
-  return result.rows;
+  return await sql.unsafe(text, params ?? []);
 }
 
-export default pool;
+export default sql;
 
 export type User = {
   id: number;
