@@ -440,7 +440,7 @@ export default function AdminPage() {
                     </div>
                     <div className="bg-black/40 rounded-xl p-3 max-h-40 overflow-y-auto">
                       {subKeys.map((k) => (
-                        <p key={k} className="font-mono text-sm text-white/80 mb-1">{k}</p>
+                        <p key={k} className="font-mono text-sm text-white/80 leading-tight">{k}</p>
                       ))}
                     </div>
                   </div>
@@ -495,7 +495,7 @@ export default function AdminPage() {
                     </div>
                     <div className="bg-black/40 rounded-xl p-3 max-h-40 overflow-y-auto">
                       {hwidKeys.map((k) => (
-                        <p key={k} className="font-mono text-sm text-white/80 mb-1">{k}</p>
+                        <p key={k} className="font-mono text-sm text-white/80 leading-tight">{k}</p>
                       ))}
                     </div>
                   </div>
