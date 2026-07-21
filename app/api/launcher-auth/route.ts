@@ -34,6 +34,13 @@ export async function POST(req: Request) {
       );
     }
 
+    if (user.banned) {
+      return NextResponse.json(
+        { success: false, error: user.ban_reason || "Ваш аккаунт заблокирован" },
+        { status: 403 }
+      );
+    }
+
     if (hwid) {
       if (user.hwid && user.hwid !== hwid) {
         return NextResponse.json(

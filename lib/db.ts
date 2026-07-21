@@ -73,6 +73,20 @@ try {
   // колонка уже существует
 }
 
+// Добавляем поле banned если его нет (миграция)
+try {
+  db.exec(`ALTER TABLE users ADD COLUMN banned INTEGER DEFAULT 0`);
+} catch {
+  // колонка уже существует
+}
+
+// Добавляем поле ban_reason если его нет (миграция)
+try {
+  db.exec(`ALTER TABLE users ADD COLUMN ban_reason TEXT`);
+} catch {
+  // колонка уже существует
+}
+
 // Таблица новостей
 db.exec(`
   CREATE TABLE IF NOT EXISTS news (
@@ -93,6 +107,8 @@ export type User = {
   hwid: string | null;
   is_admin: number;
   role: string;
+  banned: number;
+  ban_reason: string | null;
   created_at: string;
 };
 

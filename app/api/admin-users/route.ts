@@ -3,7 +3,7 @@ import db from "@/lib/db";
 
 export async function POST(req: Request) {
   try {
-    const { admin_token, action, user_id, role } = await req.json();
+    const { admin_token, action, user_id, role, ban_reason } = await req.json();
 
     if (admin_token !== "euphoria-admin-2024") {
       return NextResponse.json({ error: "Неверный токен" }, { status: 403 });
@@ -11,7 +11,7 @@ export async function POST(req: Request) {
 
     if (action === "list") {
       const users = db
-        .prepare("SELECT id, username, email, role, subscription_end, hwid, is_admin, created_at FROM users ORDER BY id")
+        .prepare("SELECT id, username, email, role, subscription_end, hwid, is_admin, banned, ban_reason, created_at FROM users ORDER BY id")
         .all();
       return NextResponse.json({ ok: true, users });
     }
@@ -37,6 +37,23 @@ export async function POST(req: Request) {
 
       db.prepare("UPDATE users SET role = ? WHERE id = ?").run(role, user_id);
 
+      return NextResponse.json({ ok: true });
+    }
+
+    if (action === "ban") {
+      if (!user_id) {
+        return NextResponse.json({ error: "Укажите user_id" }, { status: 400 });
+      }
+      db.prepare("UPDATE users SET banned = 1, ban_reason = ? WHERE id = ?").run(ban_reason || null, user_id);
+      db.prepare("DELETE FROM sessions WHERE user_id = ?").run(user_id);
+      return NextResponse.json({ ok: true });
+    }
+
+    if (action === "unban") {
+      if (!user_id) {
+        return NextResponse.json({ error: "Укажите user_id" }, { status: 400 });
+      }
+      db.prepare("UPDATE users SET banned = 0, ban_reason = NULL WHERE id = ?").run(user_id);
       return NextResponse.json({ ok: true });
     }
 

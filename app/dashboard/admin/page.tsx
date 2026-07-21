@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import {
+  import {
   ArrowLeft,
   Key,
   Fingerprint,
@@ -15,6 +15,8 @@ import {
   Check,
   ShieldCheck,
   Trash,
+  Prohibit,
+  WarningCircle,
 } from "@phosphor-icons/react";
 
 type Me = {
@@ -191,6 +193,39 @@ export default function AdminPage() {
         body: JSON.stringify({
           admin_token: adminToken,
           action: "delete",
+          user_id: userId,
+        }),
+      });
+      loadUsers();
+    } catch {}
+  }
+
+  async function banUser(userId: number) {
+    const reason = prompt("Причина бана (необязательно):");
+    if (reason === null) return;
+    try {
+      await fetch("/api/admin-users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          admin_token: adminToken,
+          action: "ban",
+          user_id: userId,
+          ban_reason: reason || undefined,
+        }),
+      });
+      loadUsers();
+    } catch {}
+  }
+
+  async function unbanUser(userId: number) {
+    try {
+      await fetch("/api/admin-users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          admin_token: adminToken,
+          action: "unban",
           user_id: userId,
         }),
       });
@@ -575,6 +610,7 @@ export default function AdminPage() {
                       <th className="text-left py-3 px-2">Роль</th>
                       <th className="text-left py-3 px-2">Подписка</th>
                       <th className="text-left py-3 px-2">HWID</th>
+                      <th className="text-left py-3 px-2">Статус</th>
                       <th className="text-left py-3 px-2">Действия</th>
                     </tr>
                   </thead>
@@ -607,14 +643,46 @@ export default function AdminPage() {
                           {u.hwid || "—"}
                         </td>
                         <td className="py-3 px-2">
-                          {u.id !== 1 && (
-                            <button
-                              onClick={() => deleteUser(u.id)}
-                              className="text-red-400 hover:text-red-300 transition"
-                            >
-                              <Trash size={16} />
-                            </button>
+                          {u.banned ? (
+                            <span className="flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-red-500/20 text-red-300" title={u.ban_reason || ""}>
+                              <Prohibit size={12} />
+                              Забанен
+                            </span>
+                          ) : (
+                            <span className="text-green-400 text-xs">Активен</span>
                           )}
+                        </td>
+                        <td className="py-3 px-2">
+                          <div className="flex items-center gap-2">
+                            {u.id !== 1 && (
+                              <>
+                                {u.banned ? (
+                                  <button
+                                    onClick={() => unbanUser(u.id)}
+                                    className="text-green-400 hover:text-green-300 transition"
+                                    title="Разбанить"
+                                  >
+                                    <Check size={16} weight="bold" />
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => banUser(u.id)}
+                                    className="text-orange-400 hover:text-orange-300 transition"
+                                    title="Забанить"
+                                  >
+                                    <Prohibit size={16} />
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => deleteUser(u.id)}
+                                  className="text-red-400 hover:text-red-300 transition"
+                                  title="Удалить"
+                                >
+                                  <Trash size={16} />
+                                </button>
+                              </>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}
