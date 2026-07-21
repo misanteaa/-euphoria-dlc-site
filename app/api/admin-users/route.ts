@@ -11,7 +11,7 @@ export async function POST(req: Request) {
 
     if (action === "list") {
       const users = db
-        .prepare("SELECT id, username, email, subscription_end, hwid, is_admin, created_at FROM users ORDER BY id")
+        .prepare("SELECT id, username, email, role, subscription_end, hwid, is_admin, created_at FROM users ORDER BY id")
         .all();
       return NextResponse.json({ ok: true, users });
     }
