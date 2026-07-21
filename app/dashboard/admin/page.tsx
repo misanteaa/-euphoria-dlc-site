@@ -17,6 +17,7 @@ import Footer from "@/components/Footer";
   Trash,
   Prohibit,
   WarningCircle,
+  Minus,
 } from "@phosphor-icons/react";
 
 type Me = {
@@ -229,6 +230,26 @@ export default function AdminPage() {
           user_id: userId,
         }),
       });
+      loadUsers();
+    } catch {}
+  }
+
+  async function reduceSubscription(userId: number) {
+    const days = prompt("Сколько дней убрать?");
+    if (!days || isNaN(Number(days)) || Number(days) < 1) return;
+    try {
+      const res = await fetch("/api/admin-users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          admin_token: adminToken,
+          action: "reduce-subscription",
+          user_id: userId,
+          days: Number(days),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) alert(data.error || "Ошибка");
       loadUsers();
     } catch {}
   }
@@ -648,6 +669,15 @@ export default function AdminPage() {
                           <div className="flex items-center gap-2">
                             {u.id !== 1 && (
                               <>
+                                {u.subscription_end && (
+                                  <button
+                                    onClick={() => reduceSubscription(u.id)}
+                                    className="text-yellow-400 hover:text-yellow-300 transition"
+                                    title="Убрать дни подписки"
+                                  >
+                                    <Minus size={16} />
+                                  </button>
+                                )}
                                 {u.banned ? (
                                   <button
                                     onClick={() => unbanUser(u.id)}
