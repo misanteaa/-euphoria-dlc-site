@@ -14,6 +14,7 @@ import {
   CalendarBlank,
   Key,
   Fingerprint,
+  Shield,
 } from "@phosphor-icons/react";
 
 type Me = {
@@ -154,6 +155,16 @@ export default function ProfilePage() {
               </div>
             </div>
           </div>
+
+          {user.role === "admin" && (
+            <Link
+              href="/dashboard/admin"
+              className="flex items-center justify-center gap-3 w-full py-4 rounded-2xl font-semibold transition bg-purple-600/80 hover:bg-purple-700 border border-purple-500/30 mb-8"
+            >
+              <Shield size={20} weight="bold" />
+              Админ панель
+            </Link>
+          )}
 
           {/* Сообщение */}
           {msg && (
