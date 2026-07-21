@@ -48,10 +48,15 @@ export default function AdminPage() {
 
   // Все ключи
   const [allKeys, setAllKeys] = useState<any[]>([]);
-  const [keysTab, setKeysTab] = useState<"generate" | "list" | "users" | "news">("generate");
+  const [keysTab, setKeysTab] = useState<"generate" | "list" | "users" | "news" | "media">("generate");
 
   // Пользователи
   const [allUsers, setAllUsers] = useState<any[]>([]);
+
+  // Медиа заявки
+  const [mediaSubmissions, setMediaSubmissions] = useState<any[]>([]);
+  const [mediaReward, setMediaReward] = useState<number>(10);
+  const [mediaNote, setMediaNote] = useState<string>("");
 
   // Новости
   const [allNews, setAllNews] = useState<any[]>([]);
@@ -92,11 +97,47 @@ export default function AdminPage() {
     } catch {}
   }
 
+  async function loadMedia() {
+    try {
+      const res = await fetch("/api/media-review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ admin_token: adminToken, action: "list" }),
+      });
+      const data = await res.json();
+      if (data.submissions) setMediaSubmissions(data.submissions);
+    } catch {}
+  }
+
+  async function approveMedia(id: number) {
+    try {
+      await fetch("/api/media-review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ admin_token: adminToken, action: "approve", submission_id: id, reward: mediaReward, admin_note: mediaNote || undefined }),
+      });
+      loadMedia();
+      loadUsers();
+    } catch {}
+  }
+
+  async function rejectMedia(id: number) {
+    try {
+      await fetch("/api/media-review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ admin_token: adminToken, action: "reject", submission_id: id, admin_note: mediaNote || undefined }),
+      });
+      loadMedia();
+    } catch {}
+  }
+
   useEffect(() => {
     if (user) {
       loadKeys();
       loadUsers();
       loadNews();
+      loadMedia();
     }
   }, [user]);
 
@@ -441,6 +482,16 @@ export default function AdminPage() {
             >
               Новости
             </button>
+            <button
+              onClick={() => setKeysTab("media")}
+              className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition ${
+                keysTab === "media"
+                  ? "bg-purple-600/80 text-white"
+                  : "text-white/60 hover:text-white"
+              }`}
+            >
+              Медиа
+            </button>
           </div>
 
           {keysTab === "generate" && (
@@ -663,6 +714,7 @@ export default function AdminPage() {
                       <th className="text-left py-3 px-2">Email</th>
                       <th className="text-left py-3 px-2">Роль</th>
                       <th className="text-left py-3 px-2">Подписка</th>
+                      <th className="text-left py-3 px-2">Баланс</th>
                       <th className="text-left py-3 px-2">HWID</th>
                       <th className="text-left py-3 px-2">Статус</th>
                       <th className="text-left py-3 px-2">Действия</th>
@@ -693,6 +745,7 @@ export default function AdminPage() {
                               : "Истекла"
                             : "Нет"}
                         </td>
+                        <td className="py-3 px-2 text-white/60">{u.balance ?? 0} ₽</td>
                         <td className="py-3 px-2 text-white/40 font-mono text-xs max-w-[120px] truncate">
                           {u.hwid || "—"}
                         </td>
@@ -874,6 +927,90 @@ export default function AdminPage() {
                     <p className="text-white/30 text-center py-8">Нет новостей</p>
                   )}
                 </div>
+              </div>
+            </div>
+          )}
+
+          {keysTab === "media" && (
+            <div className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-7">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                  <Users size={22} className="text-white/70" />
+                  <h2 className="text-2xl font-bold">Медиа заявки ({mediaSubmissions.length})</h2>
+                </div>
+                <button
+                  onClick={loadMedia}
+                  className="text-sm text-purple-400 hover:text-purple-300"
+                >
+                  Обновить
+                </button>
+              </div>
+
+              <div className="mb-4 flex items-center gap-3">
+                <label className="text-white/40 text-xs">Награда (₽):</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={mediaReward}
+                  onChange={(e) => setMediaReward(Number(e.target.value))}
+                  className="w-24 bg-black/40 px-3 py-2 rounded-xl border border-white/10 focus:border-purple-500 outline-none text-sm"
+                />
+              </div>
+
+              <div className="flex flex-col gap-4 max-h-[500px] overflow-y-auto">
+                {mediaSubmissions.map((s: any) => (
+                  <div key={s.id} className="bg-black/30 rounded-xl p-4 border border-white/5">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-white/90 text-sm">{s.username}</span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${
+                          s.status === "approved" ? "bg-green-500/20 text-green-300" :
+                          s.status === "rejected" ? "bg-red-500/20 text-red-300" :
+                          "bg-yellow-500/20 text-yellow-300"
+                        }`}>
+                          {s.status === "approved" ? "Одобрено" : s.status === "rejected" ? "Отклонено" : "На рассмотрении"}
+                        </span>
+                        {s.reward > 0 && <span className="text-green-400 text-sm">+{s.reward} ₽</span>}
+                      </div>
+                      <span className="text-white/30 text-xs">{s.created_at?.slice(0, 10)}</span>
+                    </div>
+
+                    <a href={s.video_url} target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:text-purple-300 text-sm truncate block mb-3">
+                      {s.video_url}
+                    </a>
+
+                    {s.admin_note && (
+                      <p className="text-white/30 text-xs mb-2">Примечание: {s.admin_note}</p>
+                    )}
+
+                    {s.status === "pending" && (
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          placeholder="Примечание (необязательно)"
+                          value={mediaNote}
+                          onChange={(e) => setMediaNote(e.target.value)}
+                          className="flex-1 bg-black/40 px-3 py-2 rounded-xl border border-white/10 focus:border-purple-500 outline-none text-xs"
+                        />
+                        <button
+                          onClick={() => approveMedia(s.id)}
+                          className="px-4 py-2 rounded-xl text-xs font-semibold bg-green-600 hover:bg-green-700 transition"
+                        >
+                          Одобрить
+                        </button>
+                        <button
+                          onClick={() => rejectMedia(s.id)}
+                          className="px-4 py-2 rounded-xl text-xs font-semibold bg-red-600 hover:bg-red-700 transition"
+                        >
+                          Отклонить
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+                {mediaSubmissions.length === 0 && (
+                  <p className="text-white/30 text-center py-8">Нет заявок</p>
+                )}
               </div>
             </div>
           )}

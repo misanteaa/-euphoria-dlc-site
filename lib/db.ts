@@ -45,11 +45,28 @@ async function initDb() {
         created_at TIMESTAMP DEFAULT NOW()
       );
 
+      CREATE TABLE IF NOT EXISTS media_submissions (
+        id         SERIAL PRIMARY KEY,
+        user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        video_url  TEXT NOT NULL,
+        status     TEXT DEFAULT 'pending',
+        reward     INTEGER DEFAULT 0,
+        admin_note TEXT,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+
       CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token);
       CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
       CREATE INDEX IF NOT EXISTS idx_keys_key ON keys(key);
       CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
       CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+    `);
+
+    await pool.query(`
+      DO $$ BEGIN
+        ALTER TABLE users ADD COLUMN balance INTEGER DEFAULT 0;
+      EXCEPTION WHEN duplicate_column THEN null;
+      END $$;
     `);
     console.log("DB tables initialized");
   } catch (e: any) {

@@ -11,7 +11,7 @@ export async function POST(req: Request) {
     }
 
     if (action === "list") {
-      const users = await queryAll("SELECT id, username, email, role, subscription_end, hwid, is_admin, banned, ban_reason, created_at FROM users ORDER BY id");
+      const users = await queryAll("SELECT id, username, email, role, subscription_end, hwid, is_admin, banned, ban_reason, created_at, balance FROM users ORDER BY id");
       return NextResponse.json({ ok: true, users });
     }
 
