@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import db, { User } from "@/lib/db";
+import { queryOne } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -8,21 +8,16 @@ export async function POST(req: Request) {
     const { username } = await req.json();
 
     if (!username) {
-      return NextResponse.json(
-        { success: false, error: "Username required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, error: "Username required" }, { status: 400 });
     }
 
-    const user = db
-      .prepare("SELECT id, username, email, role, subscription_end, is_admin, banned FROM users WHERE username = ?")
-      .get(username) as any;
+    const user = await queryOne(
+      "SELECT id, username, email, role, subscription_end, is_admin, banned FROM users WHERE username = $1",
+      [username]
+    ) as any;
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: "User not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
     }
 
     return NextResponse.json({
@@ -35,9 +30,6 @@ export async function POST(req: Request) {
       beta_access: !!user.is_admin,
     });
   } catch {
-    return NextResponse.json(
-      { success: false, error: "Server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: "Server error" }, { status: 500 });
   }
 }

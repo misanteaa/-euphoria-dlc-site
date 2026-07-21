@@ -1,8 +1,3 @@
--- ============================================
--- Supabase schema for EuphoriaDLC
--- Run this in Supabase SQL Editor
--- ============================================
-
 CREATE TABLE IF NOT EXISTS users (
   id         SERIAL PRIMARY KEY,
   username   TEXT UNIQUE NOT NULL,
@@ -41,7 +36,6 @@ CREATE TABLE IF NOT EXISTS news (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
--- Indexes
 CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token);
 CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_keys_key ON keys(key);

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import db from "@/lib/db";
+import { query, queryOne, queryAll } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -12,17 +12,17 @@ export async function POST(req: Request) {
     }
 
     if (action === "list") {
-      const keys = db.prepare("SELECT * FROM keys ORDER BY created_at DESC").all();
+      const keys = await queryAll("SELECT * FROM keys ORDER BY created_at DESC");
       return NextResponse.json({ ok: true, keys });
     }
 
     if (action === "delete" && key_id) {
-      db.prepare("DELETE FROM keys WHERE id = ? AND activated_by IS NULL").run(key_id);
+      await query("DELETE FROM keys WHERE id = $1 AND activated_by IS NULL", [key_id]);
       return NextResponse.json({ ok: true });
     }
 
     if (action === "delete-used" && key_id) {
-      db.prepare("DELETE FROM keys WHERE id = ?").run(key_id);
+      await query("DELETE FROM keys WHERE id = $1", [key_id]);
       return NextResponse.json({ ok: true });
     }
 
