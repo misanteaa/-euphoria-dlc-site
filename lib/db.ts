@@ -73,6 +73,17 @@ try {
   // колонка уже существует
 }
 
+// Таблица новостей
+db.exec(`
+  CREATE TABLE IF NOT EXISTS news (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    title      TEXT NOT NULL,
+    content    TEXT NOT NULL,
+    tag        TEXT DEFAULT 'Новость',
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+`);
+
 export type User = {
   id: number;
   username: string;

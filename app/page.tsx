@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 
@@ -19,9 +19,17 @@ import {
 
 export default function Home() {
   const [ready, setReady] = useState(false);
+  const [news, setNews] = useState<any[]>([]);
 
   const handleLoaderFinish = useCallback(() => {
     setReady(true);
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/news")
+      .then((r) => r.json())
+      .then((d) => setNews(d.news || []))
+      .catch(() => {});
   }, []);
 
   return (
@@ -40,23 +48,29 @@ export default function Home() {
           >
             <section className="min-h-screen px-48 flex items-center relative">
               <GridBackground className="absolute inset-0" />
-              <div className="relative z-[2] w-full flex items-center gap-20">
+              <div className="relative z-[2] w-full flex items-center justify-center">
                 <motion.div
                   initial={{ opacity: 0, y: 40 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.7 }}
                   viewport={{ once: true }}
-                  className="w-1/2 pr-8"
+                  className="text-center"
                 >
-                  <h1 className="text-7xl font-extrabold leading-tight mb-6">
+                  <h1 className="text-7xl font-extrabold leading-tight mb-8">
                     О нас
                   </h1>
 
-                  <p className="text-xl text-white/60 max-w-md mb-12">
-                    Мы создаём игровой клиент нового поколения, ориентированный
-                    на скорость, стабильность и премиальный пользовательский
-                    опыт. Больше FPS. Современные модули. Ноль отвлекающих
-                    факторов.
+                  <p className="text-xl text-white/60 max-w-2xl mb-6 leading-relaxed">
+                    Мы — команда разработчиков, которая создаёт игровой клиент нового поколения.
+                    Наша цель — дать игрокам максимум производительности, стабильности и комфорта
+                    без компромиссов.
+                  </p>
+
+                  <p className="text-lg text-white/45 max-w-2xl mb-12 leading-relaxed">
+                    EuphoriaDLC — это современный клиент с поддержкой самых актуальных версий игры,
+                    продвинутыми модулями, интуитивным интерфейсом и молниеносной скоростью работы.
+                    Мы постоянно обновляем продукт, прислушиваемся к сообществу и делаем всё,
+                    чтобы каждый пользователь получил лучший игровой опыт.
                   </p>
 
                   <div className="grid grid-cols-2 gap-6 mb-14">
@@ -74,50 +88,16 @@ export default function Home() {
                     </div>
                   </div>
                 </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.8 }}
-                  viewport={{ once: true }}
-                  className="w-1/2 flex justify-end"
-                >
-                  <Image
-                    src="/icon.png"
-                    alt="Hero"
-                    width={650}
-                    height={650}
-                    className="drop-shadow-[0_0_70px_rgba(255,40,150,0.45)] select-none"
-                  />
-                </motion.div>
               </div>
             </section>
 
             <section className="min-h-screen flex items-center px-48 relative">
               <motion.div
-                initial={{ opacity: 0, scale: 0.9, x: -40 }}
-                whileInView={{ opacity: 1, scale: 1, x: 0 }}
-                transition={{ duration: 0.7 }}
-                viewport={{ once: true }}
-                className="w-1/2 flex justify-start relative"
-              >
-                <div className="-ml-24 rounded-2xl overflow-hidden shadow-2xl shadow-purple-500/20">
-                  <Image
-                    src="/chat.jpg"
-                    width={840}
-                    height={840}
-                    alt="Chat Screenshot"
-                    className="rounded-2xl"
-                  />
-                </div>
-              </motion.div>
-
-              <motion.div
                 initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7 }}
                 viewport={{ once: true }}
-                className="w-1/2 pl-20"
+                className="w-full"
               >
                 <h1 className="text-6xl font-extrabold mb-10">
                   Наши преимущества
@@ -172,6 +152,43 @@ export default function Home() {
                 </div>
               </motion.div>
             </section>
+
+            {news.length > 0 && (
+              <section className="py-24 px-48 relative">
+                <motion.div
+                  initial={{ opacity: 0, y: 40 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.7 }}
+                  viewport={{ once: true }}
+                  className="text-center mb-16"
+                >
+                  <h1 className="text-6xl font-extrabold mb-4">Новости</h1>
+                  <p className="text-white/50 text-lg">Последние обновления и события</p>
+                </motion.div>
+
+                <div className="max-w-4xl mx-auto flex flex-col gap-6">
+                  {news.map((item: any) => (
+                    <motion.div
+                      key={item.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5 }}
+                      viewport={{ once: true }}
+                      className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-6"
+                    >
+                      <div className="flex items-center gap-3 mb-3">
+                        <span className="text-xs px-3 py-1 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-300">
+                          {item.tag}
+                        </span>
+                        <span className="text-white/30 text-xs">{item.created_at?.slice(0, 10)}</span>
+                      </div>
+                      <h3 className="text-xl font-bold text-white mb-2">{item.title}</h3>
+                      <p className="text-white/60 leading-relaxed">{item.content}</p>
+                    </motion.div>
+                  ))}
+                </div>
+              </section>
+            )}
 
             <Footer />
           </motion.main>

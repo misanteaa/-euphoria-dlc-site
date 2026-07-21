@@ -44,10 +44,18 @@ export default function AdminPage() {
 
   // Все ключи
   const [allKeys, setAllKeys] = useState<any[]>([]);
-  const [keysTab, setKeysTab] = useState<"generate" | "list" | "users">("generate");
+  const [keysTab, setKeysTab] = useState<"generate" | "list" | "users" | "news">("generate");
 
   // Пользователи
   const [allUsers, setAllUsers] = useState<any[]>([]);
+
+  // Новости
+  const [allNews, setAllNews] = useState<any[]>([]);
+  const [newsTitle, setNewsTitle] = useState("");
+  const [newsContent, setNewsContent] = useState("");
+  const [newsTag, setNewsTag] = useState("Обновление");
+  const [newsMsg, setNewsMsg] = useState("");
+  const [newsLoading, setNewsLoading] = useState(false);
 
   const adminToken = "euphoria-admin-2024";
 
@@ -84,8 +92,67 @@ export default function AdminPage() {
     if (user) {
       loadKeys();
       loadUsers();
+      loadNews();
     }
   }, [user]);
+
+  async function loadNews() {
+    try {
+      const res = await fetch("/api/news");
+      const data = await res.json();
+      setAllNews(data.news || []);
+    } catch {}
+  }
+
+  async function createNews() {
+    if (!newsTitle.trim() || !newsContent.trim()) return;
+    setNewsMsg("");
+    setNewsLoading(true);
+    try {
+      const res = await fetch("/api/admin-news", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          admin_token: adminToken,
+          action: "create",
+          title: newsTitle,
+          content: newsContent,
+          tag: newsTag,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setNewsMsg(data.error || "Ошибка");
+        return;
+      }
+      setNewsMsg("Новость создана ✓");
+      setNewsTitle("");
+      setNewsContent("");
+      setNewsTag("Обновление");
+      loadNews();
+    } catch {
+      setNewsMsg("Ошибка сервера");
+    } finally {
+      setNewsLoading(false);
+    }
+  }
+
+  async function deleteNews(id: number) {
+    if (!confirm("Удалить новость?")) return;
+    try {
+      const res = await fetch("/api/admin-news", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          admin_token: adminToken,
+          action: "delete",
+          id,
+        }),
+      });
+      const data = await res.json();
+      if (data.ok) loadNews();
+    } catch {}
+  }
 
   async function loadUsers() {
     try {
@@ -128,6 +195,23 @@ export default function AdminPage() {
         }),
       });
       loadUsers();
+    } catch {}
+  }
+
+  async function deleteKey(keyId: number) {
+    if (!confirm("Удалить ключ?")) return;
+    try {
+      const res = await fetch("/api/admin-keys", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          admin_token: adminToken,
+          action: "delete",
+          key_id: keyId,
+        }),
+      });
+      const data = await res.json();
+      if (data.ok) loadKeys();
     } catch {}
   }
 
@@ -250,9 +334,19 @@ export default function AdminPage() {
             >
               Пользователи
             </button>
+            <button
+              onClick={() => setKeysTab("news")}
+              className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition ${
+                keysTab === "news"
+                  ? "bg-purple-600/80 text-white"
+                  : "text-white/60 hover:text-white"
+              }`}
+            >
+              Новости
+            </button>
           </div>
 
-          {keysTab === "generate" ? (
+          {keysTab === "generate" && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Ключи подписки */}
               <div className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-7">
@@ -382,7 +476,9 @@ export default function AdminPage() {
                 </button>
               </div>
             </div>
-          ) : (
+          )}
+
+          {keysTab === "list" && (
             /* Список всех ключей */
             <div className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-7">
               <div className="flex items-center justify-between mb-6">
@@ -406,7 +502,8 @@ export default function AdminPage() {
                       <th className="text-left py-3 px-2">Тип</th>
                       <th className="text-left py-3 px-2">Дней</th>
                       <th className="text-left py-3 px-2">Статус</th>
-                      <th className="text-left py-3 px-2">Создан</th>
+                       <th className="text-left py-3 px-2">Создан</th>
+                      <th className="text-left py-3 px-2"></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -433,6 +530,15 @@ export default function AdminPage() {
                           </span>
                         </td>
                         <td className="py-3 px-2 text-white/40">{k.created_at}</td>
+                        <td className="py-3 px-2">
+                          <button
+                            onClick={() => deleteKey(k.id)}
+                            className="text-red-400 hover:text-red-300 transition"
+                            title="Удалить"
+                          >
+                            <Trash size={16} />
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -517,6 +623,112 @@ export default function AdminPage() {
                 {allUsers.length === 0 && (
                   <p className="text-white/30 text-center py-8">Нет пользователей</p>
                 )}
+              </div>
+            </div>
+          )}
+
+          {keysTab === "news" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Создать новость */}
+              <div className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-7">
+                <div className="flex items-center gap-2 mb-1">
+                  <Key size={22} className="text-white/70" />
+                  <h2 className="text-2xl font-bold">Новая новость</h2>
+                </div>
+                <p className="text-white/40 mb-5">Добавление новости на главную страницу.</p>
+
+                <div className="mb-4">
+                  <label className="text-white/40 text-xs mb-1 block">Тег</label>
+                  <select
+                    value={newsTag}
+                    onChange={(e) => setNewsTag(e.target.value)}
+                    className="w-full bg-black/40 px-4 py-3 rounded-xl border border-white/10 focus:border-purple-500 outline-none"
+                  >
+                    <option value="Обновление">Обновление</option>
+                    <option value="Ивент">Ивент</option>
+                    <option value="Важно">Важно</option>
+                    <option value="Исправление">Исправление</option>
+                    <option value="Анонс">Анонс</option>
+                  </select>
+                </div>
+
+                <div className="mb-4">
+                  <label className="text-white/40 text-xs mb-1 block">Заголовок</label>
+                  <input
+                    type="text"
+                    value={newsTitle}
+                    onChange={(e) => setNewsTitle(e.target.value)}
+                    placeholder="Название новости"
+                    className="w-full bg-black/40 px-4 py-3 rounded-xl border border-white/10 focus:border-purple-500 outline-none"
+                  />
+                </div>
+
+                <div className="mb-4">
+                  <label className="text-white/40 text-xs mb-1 block">Содержание</label>
+                  <textarea
+                    value={newsContent}
+                    onChange={(e) => setNewsContent(e.target.value)}
+                    placeholder="Текст новости..."
+                    rows={4}
+                    className="w-full bg-black/40 px-4 py-3 rounded-xl border border-white/10 focus:border-purple-500 outline-none resize-none"
+                  />
+                </div>
+
+                {newsMsg && (
+                  <p className={`text-sm mb-3 ${newsMsg.includes("✓") ? "text-green-400" : "text-red-400"}`}>
+                    {newsMsg}
+                  </p>
+                )}
+
+                <button
+                  onClick={createNews}
+                  disabled={newsLoading || !newsTitle.trim() || !newsContent.trim()}
+                  className="w-full flex items-center justify-center gap-2 py-4 rounded-xl font-semibold transition bg-purple-600 hover:bg-purple-700 disabled:opacity-60"
+                >
+                  {newsLoading ? "Публикация..." : "Опубликовать"}
+                </button>
+              </div>
+
+              {/* Список новостей */}
+              <div className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-7">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-2">
+                    <Users size={22} className="text-white/70" />
+                    <h2 className="text-2xl font-bold">Все новости ({allNews.length})</h2>
+                  </div>
+                  <button
+                    onClick={loadNews}
+                    className="text-sm text-purple-400 hover:text-purple-300"
+                  >
+                    Обновить
+                  </button>
+                </div>
+
+                <div className="flex flex-col gap-4 max-h-96 overflow-y-auto">
+                  {allNews.map((n: any) => (
+                    <div key={n.id} className="bg-black/30 rounded-xl p-4 border border-white/5">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-300">
+                            {n.tag}
+                          </span>
+                          <span className="text-white/30 text-xs">{n.created_at?.slice(0, 10)}</span>
+                        </div>
+                        <button
+                          onClick={() => deleteNews(n.id)}
+                          className="text-red-400 hover:text-red-300 transition"
+                        >
+                          <Trash size={14} />
+                        </button>
+                      </div>
+                      <h3 className="font-bold text-white/90 mb-1">{n.title}</h3>
+                      <p className="text-white/50 text-sm">{n.content}</p>
+                    </div>
+                  ))}
+                  {allNews.length === 0 && (
+                    <p className="text-white/30 text-center py-8">Нет новостей</p>
+                  )}
+                </div>
               </div>
             </div>
           )}

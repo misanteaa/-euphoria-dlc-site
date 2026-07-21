@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   try {
-    const { username, password } = await req.json();
+    const { username, password, hwid } = await req.json();
 
     if (!username || !password) {
       return NextResponse.json(
@@ -32,6 +32,18 @@ export async function POST(req: Request) {
         { success: false, error: "Неверный логин или пароль" },
         { status: 401 }
       );
+    }
+
+    if (hwid) {
+      if (user.hwid && user.hwid !== hwid) {
+        return NextResponse.json(
+          { success: false, error: "HWID не совпадает. Используй ключ сброса HWID." },
+          { status: 403 }
+        );
+      }
+      if (!user.hwid) {
+        db.prepare("UPDATE users SET hwid = ? WHERE id = ?").run(hwid, user.id);
+      }
     }
 
     return NextResponse.json({

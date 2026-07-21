@@ -21,10 +21,10 @@ const columns = [
   {
     title: "Контакты",
     links: [
-      { label: "Telegram", href: "https://t.me/EuphoriaDLC", external: true },
+      { label: "Telegram", href: "https://t.me/+YSGwKHFMrQAxZWVi", external: true },
       {
         label: "Discord",
-        href: "https://discord.gg/8dkVx9FfH",
+        href: "https://discord.gg/wf2NuypGS",
         external: true,
       },
     ],
