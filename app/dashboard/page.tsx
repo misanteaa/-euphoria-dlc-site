@@ -230,12 +230,21 @@ export default function Dashboard() {
                     title="Дополнения"
                     desc="Ключ и смена пароля"
                   />
-                  <ActionCard
-                    href="https://drive.google.com/uc?export=download&id=1aTDsNJiaJVAYsJ7WYJUnR6PUQ0I7oMZV"
-                    icon={<DownloadSimple size={22} />}
-                    title="Скачать лаунчер"
-                    desc="Загрузить последнюю версию"
-                  />
+                  {hasSub ? (
+                    <ActionCard
+                      href="https://drive.google.com/uc?export=download&id=1aTDsNJiaJVAYsJ7WYJUnR6PUQ0I7oMZV"
+                      icon={<DownloadSimple size={22} />}
+                      title="Скачать лаунчер"
+                      desc="Загрузить последнюю версию"
+                    />
+                  ) : (
+                    <ActionCard
+                      href="/pricing"
+                      icon={<ShoppingCartSimple size={22} />}
+                      title="Скачать лаунчер"
+                      desc="Требуется подписка"
+                    />
+                  )}
                   {user?.role === "admin" && (
                     <ActionCard
                       href="/dashboard/admin"
