@@ -13,7 +13,7 @@
         "@phosphor-icons/react": "^2.1.10",
         "autoprefixer": "^10.4.22",
         "bcrypt": "^6.0.0",
-        "better-sqlite3": "^12.11.1",
+        "pg": "^8.13.0",
         "clsx": "^2.1.1",
         "framer-motion": "^12.23.24",
         "motion": "^12.23.24",
@@ -27,7 +27,7 @@
     "devDependencies": {
         "@tailwindcss/postcss": "^4",
         "@types/bcrypt": "^6.0.0",
-        "@types/better-sqlite3": "^7.6.12",
+        "@types/pg": "^8.11.0",
         "@types/node": "^20",
         "@types/react": "^19",
         "@types/react-dom": "^19",

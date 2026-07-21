@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
-import db, { User } from "@/lib/db";
+import { query, queryOne, User } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 
 export async function POST(req: Request) {
@@ -18,15 +18,13 @@ export async function POST(req: Request) {
       );
     }
 
-    const user = db
-      .prepare("SELECT * FROM users WHERE id = ?")
-      .get(me.id) as User | undefined;
+    const user = await queryOne("SELECT * FROM users WHERE id = $1", [me.id]) as User | undefined;
     if (!user) {
       return NextResponse.json({ error: "Пользователь не найден" }, { status: 404 });
     }
 
     const hash = await bcrypt.hash(password, 10);
-    db.prepare("UPDATE users SET password = ? WHERE id = ?").run(hash, me.id);
+    await query("UPDATE users SET password = $1 WHERE id = $2", [hash, me.id]);
 
     return NextResponse.json({ ok: true });
   } catch {

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import db, { User } from "@/lib/db";
+import { queryOne } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -14,9 +14,10 @@ export async function POST(req: Request) {
       );
     }
 
-    const user = db
-      .prepare("SELECT id, username, email, role, subscription_end FROM users WHERE username = ?")
-      .get(username) as User | undefined;
+    const user = await queryOne(
+      "SELECT id, username, email, role, subscription_end, is_admin, banned FROM users WHERE username = $1",
+      [username]
+    ) as any;
 
     if (!user) {
       return NextResponse.json(
@@ -31,8 +32,8 @@ export async function POST(req: Request) {
       username: user.username,
       email: user.email,
       role: user.role || "user",
-      banned: false,
-      beta_access: false,
+      banned: !!user.banned,
+      beta_access: !!user.is_admin,
     });
   } catch {
     return NextResponse.json(

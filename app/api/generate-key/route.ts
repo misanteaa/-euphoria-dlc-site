@@ -1,18 +1,7 @@
 import { NextResponse } from "next/server";
-import crypto from "crypto";
-import db from "@/lib/db";
+import { query, queryOne } from "@/lib/db";
 
-function generateKey(): string {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  const segments = [7, 4, 4];
-  return segments
-    .map((len) =>
-      Array.from({ length: len }, () =>
-        chars[crypto.randomInt(chars.length)]
-      ).join("")
-    )
-    .join("-");
-}
+export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   try {
@@ -29,19 +18,26 @@ export async function POST(req: Request) {
       );
     }
 
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    const segments = [7, 4, 4];
     const numKeys = Math.min(Math.max(1, Number(count)), 100);
     const keys: string[] = [];
 
-    const insert = db.prepare(
-      "INSERT INTO keys (key, duration_days) VALUES (?, ?)"
-    );
-
     for (let i = 0; i < numKeys; i++) {
-      let key = generateKey();
-      while (db.prepare("SELECT id FROM keys WHERE key = ?").get(key)) {
-        key = generateKey();
+      let key = "";
+      let unique = false;
+      while (!unique) {
+        key = segments
+          .map((len) =>
+            Array.from({ length: len }, () =>
+              chars[Math.floor(Math.random() * chars.length)]
+            ).join("")
+          )
+          .join("-");
+        const existing = await queryOne("SELECT id FROM keys WHERE key = $1", [key]);
+        if (!existing) unique = true;
       }
-      insert.run(key, duration_days);
+      await query("INSERT INTO keys (key, duration_days) VALUES ($1, $2)", [key, duration_days]);
       keys.push(key);
     }
 

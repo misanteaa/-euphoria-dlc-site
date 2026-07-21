@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import db from "@/lib/db";
+import { query, queryOne, queryAll } from "@/lib/db";
 
 export async function POST(req: Request) {
   try {
@@ -10,9 +10,9 @@ export async function POST(req: Request) {
     }
 
     if (action === "list") {
-      const users = db
-        .prepare("SELECT id, username, email, role, subscription_end, hwid, is_admin, banned, ban_reason, created_at FROM users ORDER BY id")
-        .all();
+      const users = await queryAll(
+        "SELECT id, username, email, role, subscription_end, hwid, is_admin, banned, ban_reason, created_at FROM users ORDER BY id"
+      );
       return NextResponse.json({ ok: true, users });
     }
 
@@ -29,13 +29,8 @@ export async function POST(req: Request) {
         );
       }
 
-      if (role === "admin") {
-        db.prepare("UPDATE users SET is_admin = 1 WHERE id = ?").run(user_id);
-      } else {
-        db.prepare("UPDATE users SET is_admin = 0 WHERE id = ?").run(user_id);
-      }
-
-      db.prepare("UPDATE users SET role = ? WHERE id = ?").run(role, user_id);
+      const isAdmin = role === "admin" ? 1 : 0;
+      await query("UPDATE users SET is_admin = $1, role = $2 WHERE id = $3", [isAdmin, role, user_id]);
 
       return NextResponse.json({ ok: true });
     }
@@ -44,8 +39,8 @@ export async function POST(req: Request) {
       if (!user_id) {
         return NextResponse.json({ error: "Укажите user_id" }, { status: 400 });
       }
-      db.prepare("UPDATE users SET banned = 1, ban_reason = ? WHERE id = ?").run(ban_reason || null, user_id);
-      db.prepare("DELETE FROM sessions WHERE user_id = ?").run(user_id);
+      await query("UPDATE users SET banned = 1, ban_reason = $1 WHERE id = $2", [ban_reason || null, user_id]);
+      await query("DELETE FROM sessions WHERE user_id = $1", [user_id]);
       return NextResponse.json({ ok: true });
     }
 
@@ -53,7 +48,7 @@ export async function POST(req: Request) {
       if (!user_id) {
         return NextResponse.json({ error: "Укажите user_id" }, { status: 400 });
       }
-      db.prepare("UPDATE users SET banned = 0, ban_reason = NULL WHERE id = ?").run(user_id);
+      await query("UPDATE users SET banned = 0, ban_reason = NULL WHERE id = $1", [user_id]);
       return NextResponse.json({ ok: true });
     }
 
@@ -61,8 +56,8 @@ export async function POST(req: Request) {
       if (!user_id) {
         return NextResponse.json({ error: "Укажите user_id" }, { status: 400 });
       }
-      db.prepare("DELETE FROM sessions WHERE user_id = ?").run(user_id);
-      db.prepare("DELETE FROM users WHERE id = ?").run(user_id);
+      await query("DELETE FROM sessions WHERE user_id = $1", [user_id]);
+      await query("DELETE FROM users WHERE id = $1", [user_id]);
       return NextResponse.json({ ok: true });
     }
 

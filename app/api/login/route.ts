@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
-import db, { User } from "@/lib/db";
+import { queryOne, User } from "@/lib/db";
 import { createSession } from "@/lib/auth";
 
 export async function POST(req: Request) {
@@ -14,10 +14,10 @@ export async function POST(req: Request) {
       );
     }
 
-    // login — это email ИЛИ имя пользователя
-    const user = db
-      .prepare("SELECT * FROM users WHERE username = ? OR email = ?")
-      .get(login, login) as User | undefined;
+    const user = await queryOne(
+      "SELECT * FROM users WHERE LOWER(username) = LOWER($1) OR LOWER(email) = LOWER($1)",
+      [login]
+    ) as User | undefined;
 
     if (!user) {
       return NextResponse.json(

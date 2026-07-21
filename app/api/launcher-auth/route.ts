@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
-import db, { User } from "@/lib/db";
+import { query, queryOne, User } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -15,9 +15,10 @@ export async function POST(req: Request) {
       );
     }
 
-    const user = db
-      .prepare("SELECT * FROM users WHERE username = ?")
-      .get(username) as User | undefined;
+    const user = await queryOne(
+      "SELECT * FROM users WHERE LOWER(username) = LOWER($1)",
+      [username]
+    ) as User | undefined;
 
     if (!user) {
       return NextResponse.json(
@@ -49,7 +50,7 @@ export async function POST(req: Request) {
         );
       }
       if (!user.hwid) {
-        db.prepare("UPDATE users SET hwid = ? WHERE id = ?").run(hwid, user.id);
+        await query("UPDATE users SET hwid = $1 WHERE id = $2", [hwid, user.id]);
       }
     }
 
@@ -60,6 +61,7 @@ export async function POST(req: Request) {
       email: user.email,
       role: user.role || "user",
       subscription_end: user.subscription_end || null,
+      beta_access: !!user.is_admin,
     });
   } catch {
     return NextResponse.json(

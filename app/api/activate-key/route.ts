@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import db, { LicenseKey } from "@/lib/db";
+import { query, queryOne } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 
 function addDays(date: Date, days: number): Date {
@@ -27,9 +27,10 @@ export async function POST(req: Request) {
       );
     }
 
-    const licenseKey = db
-      .prepare("SELECT * FROM keys WHERE key = ?")
-      .get(key.trim().toUpperCase()) as LicenseKey | undefined;
+    const licenseKey = await queryOne(
+      "SELECT * FROM keys WHERE key = $1",
+      [key.trim().toUpperCase()]
+    ) as any;
 
     if (!licenseKey) {
       return NextResponse.json(
@@ -46,9 +47,10 @@ export async function POST(req: Request) {
     }
 
     const now = new Date();
-    const userRow = db
-      .prepare("SELECT subscription_end FROM users WHERE id = ?")
-      .get(user.id) as { subscription_end: string | null } | undefined;
+    const userRow = await queryOne(
+      "SELECT subscription_end FROM users WHERE id = $1",
+      [user.id]
+    ) as { subscription_end: string | null } | undefined;
 
     let subEnd: Date;
     if (userRow?.subscription_end) {
@@ -58,14 +60,8 @@ export async function POST(req: Request) {
       subEnd = addDays(now, licenseKey.duration_days);
     }
 
-    db.prepare("UPDATE users SET subscription_end = ? WHERE id = ?").run(
-      formatDate(subEnd),
-      user.id
-    );
-
-    db.prepare(
-      "UPDATE keys SET activated_by = ?, activated_at = ? WHERE id = ?"
-    ).run(user.id, formatDate(now), licenseKey.id);
+    await query("UPDATE users SET subscription_end = $1 WHERE id = $2", [formatDate(subEnd), user.id]);
+    await query("UPDATE keys SET activated_by = $1, activated_at = $2 WHERE id = $3", [user.id, formatDate(now), licenseKey.id]);
 
     return NextResponse.json({
       ok: true,
