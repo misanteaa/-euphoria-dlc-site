@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { motion } from "framer-motion";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Loader from "@/components/Loader";
@@ -287,57 +287,16 @@ function ActionCard({
   title: string;
   desc: string;
 }) {
-  // 3D-тилт по позиции мыши (iOS-стиль)
-  const mx = useMotionValue(0.5);
-  const my = useMotionValue(0.5);
-  const rotateX = useSpring(useTransform(my, [0, 1], [8, -8]), {
-    damping: 15,
-    stiffness: 200,
-  });
-  const rotateY = useSpring(useTransform(mx, [0, 1], [-8, 8]), {
-    damping: 15,
-    stiffness: 200,
-  });
-  // Блик, следующий за курсором
-  const glareX = useTransform(mx, [0, 1], ["0%", "100%"]);
-  const glareY = useTransform(my, [0, 1], ["0%", "100%"]);
-
-  function handleMove(e: React.MouseEvent<HTMLDivElement>) {
-    const rect = e.currentTarget.getBoundingClientRect();
-    mx.set((e.clientX - rect.left) / rect.width);
-    my.set((e.clientY - rect.top) / rect.height);
-  }
-  function handleLeave() {
-    mx.set(0.5);
-    my.set(0.5);
-  }
-
   return (
     <motion.div
-      onMouseMove={handleMove}
-      onMouseLeave={handleLeave}
-      whileHover={{ scale: 1.03, y: -4 }}
-      whileTap={{ scale: 0.97 }}
-      style={{ rotateX, rotateY, transformPerspective: 900 }}
-      transition={{ type: "spring", damping: 18, stiffness: 260 }}
-      className="relative"
+      whileHover={{ scale: 1.02, y: -3 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ type: "spring", damping: 20, stiffness: 300 }}
     >
       <Link
         href={href}
         className="group relative flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] transition p-6 overflow-hidden"
       >
-        {/* Блик под курсором */}
-        <motion.span
-          className="pointer-events-none absolute w-40 h-40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-          style={{
-            left: glareX,
-            top: glareY,
-            x: "-50%",
-            y: "-50%",
-            background:
-              "radial-gradient(circle, rgba(168,120,255,0.25) 0%, rgba(168,120,255,0) 70%)",
-          }}
-        />
         <div className="relative flex items-center gap-4">
           <div className="w-11 h-11 rounded-xl bg-white/5 border border-white/10 grid place-items-center text-white/70 group-hover:text-purple-300 transition">
             {icon}
