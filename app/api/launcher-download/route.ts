@@ -1,24 +1,7 @@
-import { NextRequest } from "next/server"
-import fs from "fs"
-import path from "path"
-import { Readable } from "stream"
+import { NextRequest, NextResponse } from "next/server"
+
+const GOOGLE_DRIVE_URL = "https://drive.google.com/uc?export=download&id=1aTDsNJiaJVAYsJ7WYJUnR6PUQ0I7oMZV"
 
 export async function GET(req: NextRequest) {
-  const filePath = path.join(process.cwd(), "public", "launcher", "Euphoria.exe")
-
-  if (!fs.existsSync(filePath)) {
-    return new Response("File not found", { status: 404 })
-  }
-
-  const stat = fs.statSync(filePath)
-  const nodeStream = fs.createReadStream(filePath)
-  const webStream = Readable.toWeb(nodeStream) as ReadableStream
-
-  return new Response(webStream, {
-    headers: {
-      "Content-Type": "application/octet-stream",
-      "Content-Length": stat.size.toString(),
-      "Content-Disposition": 'attachment; filename="Euphoria.exe"'
-    }
-  })
+  return NextResponse.redirect(GOOGLE_DRIVE_URL)
 }

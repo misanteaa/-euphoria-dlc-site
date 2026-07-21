@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 
 const CURRENT_VERSION = "1.21.8"
-const DOWNLOAD_URL = "https://euphoria-dlc-site-production.up.railway.app/api/launcher-download"
+const DOWNLOAD_URL = "https://drive.google.com/uc?export=download&id=1aTDsNJiaJVAYsJ7WYJUnR6PUQ0I7oMZV"
 
 export async function GET(req: NextRequest) {
   return NextResponse.json({
