@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { query, queryOne } from "@/lib/db";
+import db, { LicenseKey } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 
 export async function POST(req: Request) {
@@ -17,10 +17,9 @@ export async function POST(req: Request) {
       );
     }
 
-    const licenseKey = await queryOne(
-      "SELECT * FROM keys WHERE key = $1",
-      [key.trim().toUpperCase()]
-    ) as any;
+    const licenseKey = db
+      .prepare("SELECT * FROM keys WHERE key = ?")
+      .get(key.trim().toUpperCase()) as LicenseKey | undefined;
 
     if (!licenseKey) {
       return NextResponse.json(
@@ -45,8 +44,11 @@ export async function POST(req: Request) {
 
     const now = new Date().toISOString().replace("T", " ").slice(0, 19);
 
-    await query("UPDATE users SET hwid = NULL WHERE id = $1", [user.id]);
-    await query("UPDATE keys SET activated_by = $1, activated_at = $2 WHERE id = $3", [user.id, now, licenseKey.id]);
+    db.prepare("UPDATE users SET hwid = NULL WHERE id = ?").run(user.id);
+
+    db.prepare(
+      "UPDATE keys SET activated_by = ?, activated_at = ? WHERE id = ?"
+    ).run(user.id, now, licenseKey.id);
 
     return NextResponse.json({ ok: true });
   } catch {

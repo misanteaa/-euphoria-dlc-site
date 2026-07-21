@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { query, queryAll } from "@/lib/db";
+import db from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -15,11 +15,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Заполни заголовок и текст" }, { status: 400 });
     }
 
-    await query("INSERT INTO news (title, content, tag) VALUES ($1, $2, $3)", [
+    db.prepare("INSERT INTO news (title, content, tag) VALUES (?, ?, ?)").run(
       title,
       content,
-      tag || "Новость",
-    ]);
+      tag || "Новость"
+    );
 
     return NextResponse.json({ ok: true });
   } catch {
@@ -35,7 +35,7 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: "Неверный токен" }, { status: 403 });
     }
 
-    await query("DELETE FROM news WHERE id = $1", [id]);
+    db.prepare("DELETE FROM news WHERE id = ?").run(id);
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ error: "Ошибка сервера" }, { status: 500 });

@@ -1,24 +1,62 @@
-import postgres from "postgres";
+import Database from "better-sqlite3";
+import path from "path";
+import fs from "fs";
 
-const sql = postgres(process.env.DATABASE_URL || "", {
-  ssl: { rejectUnauthorized: false },
-  max: 10,
-});
+const dbDir = process.env.RAILWAY_VOLUME_MOUNT_PATH || process.cwd();
+if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
+const dbPath = path.join(dbDir, "euphoria.db");
+const db = new Database(dbPath);
 
-export async function query(text: string, params?: any[]) {
-  return await sql.unsafe(text, params ?? []);
-}
+db.pragma("journal_mode = WAL");
 
-export async function queryOne(text: string, params?: any[]) {
-  const rows = await sql.unsafe(text, params ?? []);
-  return rows[0] ?? null;
-}
+db.exec(`
+  CREATE TABLE IF NOT EXISTS users (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    username   TEXT UNIQUE NOT NULL,
+    email      TEXT UNIQUE NOT NULL,
+    password   TEXT NOT NULL,
+    subscription_end TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+`);
 
-export async function queryAll(text: string, params?: any[]) {
-  return await sql.unsafe(text, params ?? []);
-}
+db.exec(`
+  CREATE TABLE IF NOT EXISTS sessions (
+    token      TEXT PRIMARY KEY,
+    user_id    INTEGER NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+`);
 
-export default sql;
+db.exec(`
+  CREATE TABLE IF NOT EXISTS keys (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    key           TEXT UNIQUE NOT NULL,
+    duration_days INTEGER NOT NULL,
+    activated_by  INTEGER,
+    activated_at  TEXT,
+    created_at    TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (activated_by) REFERENCES users(id) ON DELETE SET NULL
+  );
+`);
+
+try { db.exec(`ALTER TABLE users ADD COLUMN subscription_end TEXT`); } catch {}
+try { db.exec(`ALTER TABLE users ADD COLUMN hwid TEXT`); } catch {}
+try { db.exec(`ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0`); } catch {}
+try { db.exec(`ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'`); } catch {}
+try { db.exec(`ALTER TABLE users ADD COLUMN banned INTEGER DEFAULT 0`); } catch {}
+try { db.exec(`ALTER TABLE users ADD COLUMN ban_reason TEXT`); } catch {}
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS news (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    title      TEXT NOT NULL,
+    content    TEXT NOT NULL,
+    tag        TEXT DEFAULT 'Новость',
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+`);
 
 export type User = {
   id: number;
@@ -31,7 +69,6 @@ export type User = {
   role: string;
   banned: number;
   ban_reason: string | null;
-  beta_access: number;
   created_at: string;
 };
 
@@ -43,3 +80,5 @@ export type LicenseKey = {
   activated_at: string | null;
   created_at: string;
 };
+
+export default db;

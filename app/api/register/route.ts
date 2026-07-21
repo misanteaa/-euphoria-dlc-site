@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
-import { query, queryOne } from "@/lib/db";
+import db from "@/lib/db";
 import { createSession } from "@/lib/auth";
 
 export async function POST(req: Request) {
@@ -26,10 +26,9 @@ export async function POST(req: Request) {
       );
     }
 
-    const exists = await queryOne(
-      "SELECT id FROM users WHERE username = $1 OR email = $2",
-      [username, email]
-    );
+    const exists = db
+      .prepare("SELECT id FROM users WHERE username = ? OR email = ?")
+      .get(username, email);
     if (exists) {
       return NextResponse.json(
         { error: "Пользователь с таким именем или email уже существует" },
@@ -38,12 +37,11 @@ export async function POST(req: Request) {
     }
 
     const hash = await bcrypt.hash(password, 10);
-    const result = await query(
-      "INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING id",
-      [username, email, hash]
-    );
+    const info = db
+      .prepare("INSERT INTO users (username, email, password) VALUES (?, ?, ?)")
+      .run(username, email, hash);
 
-    await createSession(result.rows[0].id);
+    await createSession(Number(info.lastInsertRowid));
 
     return NextResponse.json({ ok: true });
   } catch {
