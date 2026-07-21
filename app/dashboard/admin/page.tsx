@@ -18,6 +18,7 @@ import Footer from "@/components/Footer";
   Prohibit,
   WarningCircle,
   Minus,
+  Plus,
 } from "@phosphor-icons/react";
 
 type Me = {
@@ -244,6 +245,26 @@ export default function AdminPage() {
         body: JSON.stringify({
           admin_token: adminToken,
           action: "reduce-subscription",
+          user_id: userId,
+          days: Number(days),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) alert(data.error || "Ошибка");
+      loadUsers();
+    } catch {}
+  }
+
+  async function addSubscription(userId: number) {
+    const days = prompt("Сколько дней добавить?");
+    if (!days || isNaN(Number(days)) || Number(days) < 1) return;
+    try {
+      const res = await fetch("/api/admin-users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          admin_token: adminToken,
+          action: "add-subscription",
           user_id: userId,
           days: Number(days),
         }),
@@ -698,6 +719,13 @@ export default function AdminPage() {
                                     <Minus size={16} />
                                   </button>
                                 )}
+                                <button
+                                  onClick={() => addSubscription(u.id)}
+                                  className="text-green-400 hover:text-green-300 transition"
+                                  title="Добавить дни подписки"
+                                >
+                                  <Plus size={16} />
+                                </button>
                                 {u.banned ? (
                                   <button
                                     onClick={() => unbanUser(u.id)}

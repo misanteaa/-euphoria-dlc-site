@@ -56,6 +56,23 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true, subscription_end: newEnd });
     }
 
+    if (action === "add-subscription") {
+      if (!user_id) return NextResponse.json({ error: "Укажите user_id" }, { status: 400 });
+      if (!days || days < 1) return NextResponse.json({ error: "Укажите количество дней" }, { status: 400 });
+      const user = await queryAll("SELECT subscription_end FROM users WHERE id = $1", [user_id]);
+      let base: Date;
+      if (user.length && (user[0] as any).subscription_end) {
+        const current = new Date((user[0] as any).subscription_end.replace(" ", "T"));
+        base = current > new Date() ? current : new Date();
+      } else {
+        base = new Date();
+      }
+      base.setDate(base.getDate() + days);
+      const newEnd = base.toISOString().slice(0, 19).replace("T", " ");
+      await query("UPDATE users SET subscription_end = $1 WHERE id = $2", [newEnd, user_id]);
+      return NextResponse.json({ ok: true, subscription_end: newEnd });
+    }
+
     if (action === "change-password") {
       if (!user_id || !new_password) return NextResponse.json({ error: "Укажите user_id и новый пароль" }, { status: 400 });
       if (String(new_password).length < 6) return NextResponse.json({ error: "Пароль минимум 6 символов" }, { status: 400 });
