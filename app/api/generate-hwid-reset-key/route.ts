@@ -21,7 +21,7 @@ export async function POST(req: Request) {
       let key = "";
       let unique = false;
       while (!unique) {
-        key = "HWID-" + segments.map((len) => Array.from({ length: len }, () => chars[Math.floor(Math.random() * chars.length)]).join("")).join("-");
+        key = "HWID-" + segments.map((len) => Array.from({ length: len }, () => chars[Math.floor(Math.random() * chars.length)]).join("")).join("");
         const existing = await queryOne("SELECT id FROM keys WHERE key = $1", [key]);
         if (!existing) unique = true;
       }
