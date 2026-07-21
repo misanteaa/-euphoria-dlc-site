@@ -254,6 +254,26 @@ export default function AdminPage() {
     } catch {}
   }
 
+  async function changePassword(userId: number) {
+    const pw = prompt("Новый пароль (минимум 6 символов):");
+    if (!pw || pw.length < 6) return;
+    try {
+      const res = await fetch("/api/admin-users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          admin_token: adminToken,
+          action: "change-password",
+          user_id: userId,
+          new_password: pw,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) alert(data.error || "Ошибка");
+      else alert("Пароль изменён ✓");
+    } catch {}
+  }
+
   async function deleteKey(keyId: number) {
     if (!confirm("Удалить ключ?")) return;
     try {
@@ -701,6 +721,13 @@ export default function AdminPage() {
                                   title="Удалить"
                                 >
                                   <Trash size={16} />
+                                </button>
+                                <button
+                                  onClick={() => changePassword(u.id)}
+                                  className="text-blue-400 hover:text-blue-300 transition"
+                                  title="Сменить пароль"
+                                >
+                                  <Key size={16} />
                                 </button>
                               </>
                             )}

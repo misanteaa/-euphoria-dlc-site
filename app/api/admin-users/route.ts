@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { query, queryAll } from "@/lib/db";
+import bcrypt from "bcrypt";
 
 export async function POST(req: Request) {
   try {
-    const { admin_token, action, user_id, role, ban_reason, days } = await req.json();
+    const { admin_token, action, user_id, role, ban_reason, days, new_password } = await req.json();
 
     if (admin_token !== "euphoria-admin-2024") {
       return NextResponse.json({ error: "Неверный токен" }, { status: 403 });
@@ -53,6 +54,14 @@ export async function POST(req: Request) {
       const newEnd = current.toISOString().slice(0, 19).replace("T", " ");
       await query("UPDATE users SET subscription_end = $1 WHERE id = $2", [newEnd, user_id]);
       return NextResponse.json({ ok: true, subscription_end: newEnd });
+    }
+
+    if (action === "change-password") {
+      if (!user_id || !new_password) return NextResponse.json({ error: "Укажите user_id и новый пароль" }, { status: 400 });
+      if (String(new_password).length < 6) return NextResponse.json({ error: "Пароль минимум 6 символов" }, { status: 400 });
+      const hash = await bcrypt.hash(String(new_password), 10);
+      await query("UPDATE users SET password = $1 WHERE id = $2", [hash, user_id]);
+      return NextResponse.json({ ok: true });
     }
 
     return NextResponse.json({ error: "Неизвестное действие" }, { status: 400 });
