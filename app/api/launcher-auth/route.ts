@@ -27,6 +27,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: user.ban_reason || "Ваш аккаунт заблокирован" }, { status: 403 });
     }
 
+    const subEnd = user.subscription_end ? new Date(user.subscription_end.replace(" ", "T")) : null;
+    const hasActiveSub = subEnd && subEnd > new Date();
+
+    if (!hasActiveSub && !user.is_admin) {
+      return NextResponse.json({ success: false, error: "Нет активной подписки. Купите подписку на сайте." }, { status: 403 });
+    }
+
     if (hwid) {
       if (user.hwid && user.hwid !== hwid) {
         return NextResponse.json({ success: false, error: "HWID не совпадает. Используй ключ сброса HWID." }, { status: 403 });
