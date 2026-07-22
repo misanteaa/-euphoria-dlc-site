@@ -83,7 +83,6 @@ export async function POST(req: Request) {
 
     if (action === "change-username") {
       if (!user_id) return NextResponse.json({ error: "Укажите user_id" }, { status: 400 });
-      const { new_username } = body;
       if (!new_username || String(new_username).length < 2) return NextResponse.json({ error: "Ник минимум 2 символа" }, { status: 400 });
       const exists = await queryOne("SELECT id FROM users WHERE LOWER(username) = LOWER($1) AND id != $2", [String(new_username), user_id]);
       if (exists) return NextResponse.json({ error: "Ник уже занят" }, { status: 400 });
