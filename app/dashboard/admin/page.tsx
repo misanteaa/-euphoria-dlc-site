@@ -423,7 +423,7 @@ export default function AdminPage() {
         </div>
         <div className="absolute inset-0 -z-10 bg-gradient-to-b from-black/60 via-black/70 to-black pointer-events-none" />
 
-        <div className="max-w-5xl mx-auto px-6 pt-36 pb-24">
+        <div className="max-w-7xl mx-auto px-6 pt-36 pb-24">
           <Link
             href="/dashboard"
             className="inline-flex items-center gap-2 text-white/50 hover:text-white transition text-sm mb-8"

@@ -105,6 +105,7 @@ export type User = {
   banned: number;
   ban_reason: string | null;
   beta_access: number;
+  balance: number;
   created_at: string;
 };
 

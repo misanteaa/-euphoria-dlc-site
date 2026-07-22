@@ -32,6 +32,7 @@ type Me = {
   hwid: string | null;
   role: string;
   is_admin: number;
+  balance: number;
 } | null;
 
 // Простой стабильный хеш (для наглядного HWID из данных аккаунта)
@@ -60,6 +61,13 @@ export default function Dashboard() {
   const router = useRouter();
   const [ready, setReady] = useState(false);
   const [user, setUser] = useState<Me>(null);
+  const [buyDays, setBuyDays] = useState(30);
+  const [buyMsg, setBuyMsg] = useState("");
+  const [buyLoading, setBuyLoading] = useState(false);
+  const [transferUser, setTransferUser] = useState("");
+  const [transferAmount, setTransferAmount] = useState(0);
+  const [transferMsg, setTransferMsg] = useState("");
+  const [transferLoading, setTransferLoading] = useState(false);
 
   useEffect(() => {
     fetch("/api/me")
@@ -74,6 +82,55 @@ export default function Dashboard() {
     await fetch("/api/logout", { method: "POST" });
     router.push("/login");
     router.refresh();
+  }
+
+  async function buySubscription() {
+    setBuyMsg("");
+    setBuyLoading(true);
+    try {
+      const res = await fetch("/api/balance-buy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ days: buyDays }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setBuyMsg(data.error || "Ошибка");
+        return;
+      }
+      setBuyMsg(`Подписка куплена ✓ Новый баланс: ${data.balance}₽`);
+      setUser((prev) => prev ? { ...prev, subscription_end: data.subscription_end, balance: data.balance } : prev);
+    } catch {
+      setBuyMsg("Ошибка сервера");
+    } finally {
+      setBuyLoading(false);
+    }
+  }
+
+  async function transferBalance() {
+    setTransferMsg("");
+    if (!transferUser.trim() || transferAmount < 1) return;
+    setTransferLoading(true);
+    try {
+      const res = await fetch("/api/balance-transfer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: transferUser, amount: transferAmount }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setTransferMsg(data.error || "Ошибка");
+        return;
+      }
+      setTransferMsg(`Перевод выполнен ✓ Новый баланс: ${data.balance}₽`);
+      setUser((prev) => prev ? { ...prev, balance: data.balance } : prev);
+      setTransferUser("");
+      setTransferAmount(0);
+    } catch {
+      setTransferMsg("Ошибка сервера");
+    } finally {
+      setTransferLoading(false);
+    }
   }
 
   // Производные данные аккаунта
@@ -207,6 +264,91 @@ export default function Dashboard() {
                     HWID
                   </div>
                   <p className="font-mono text-lg break-all">{hwid}</p>
+                </div>
+              </div>
+
+              {/* Баланс */}
+              <div className="mb-12">
+                <h3 className="text-3xl font-bold mb-1">Баланс</h3>
+                <p className="text-white/40 mb-6">
+                  Покупка подписки за баланс и перевод средств.
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Покупка подписки */}
+                  <div className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-7">
+                    <h4 className="text-xl font-bold mb-4">Купить подписку</h4>
+                    <p className="text-white/40 text-sm mb-4">Ваш баланс: <span className="text-white font-semibold">{user?.balance ?? 0}₽</span></p>
+
+                    <div className="mb-4">
+                      <label className="text-white/40 text-xs mb-1 block">Тариф</label>
+                      <select
+                        value={buyDays}
+                        onChange={(e) => setBuyDays(Number(e.target.value))}
+                        className="w-full bg-black/40 px-4 py-3 rounded-xl border border-white/10 focus:border-purple-500 outline-none"
+                      >
+                        <option value={1}>1 день — 10₽</option>
+                        <option value={3}>3 дня — 20₽</option>
+                        <option value={7}>7 дней — 55₽</option>
+                        <option value={30}>30 дней — 130₽</option>
+                        <option value={90}>90 дней — 250₽</option>
+                        <option value={180}>180 дней — 400₽</option>
+                        <option value={999999}>Навсегда — 300₽</option>
+                      </select>
+                    </div>
+
+                    {buyMsg && (
+                      <p className={`text-sm mb-3 ${buyMsg.includes("✓") ? "text-green-400" : "text-red-400"}`}>{buyMsg}</p>
+                    )}
+
+                    <button
+                      onClick={buySubscription}
+                      disabled={buyLoading}
+                      className="w-full py-3 rounded-xl font-semibold bg-purple-600 hover:bg-purple-700 disabled:opacity-50 transition"
+                    >
+                      {buyLoading ? "Покупка..." : "Купить"}
+                    </button>
+                  </div>
+
+                  {/* Перевод баланса */}
+                  <div className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-7">
+                    <h4 className="text-xl font-bold mb-4">Перевести баланс</h4>
+
+                    <div className="mb-4">
+                      <label className="text-white/40 text-xs mb-1 block">Получатель</label>
+                      <input
+                        type="text"
+                        value={transferUser}
+                        onChange={(e) => setTransferUser(e.target.value)}
+                        placeholder="Имя пользователя"
+                        className="w-full bg-black/40 px-4 py-3 rounded-xl border border-white/10 focus:border-purple-500 outline-none"
+                      />
+                    </div>
+
+                    <div className="mb-4">
+                      <label className="text-white/40 text-xs mb-1 block">Сумма (₽)</label>
+                      <input
+                        type="number"
+                        min={1}
+                        value={transferAmount || ""}
+                        onChange={(e) => setTransferAmount(Number(e.target.value))}
+                        placeholder="0"
+                        className="w-full bg-black/40 px-4 py-3 rounded-xl border border-white/10 focus:border-purple-500 outline-none"
+                      />
+                    </div>
+
+                    {transferMsg && (
+                      <p className={`text-sm mb-3 ${transferMsg.includes("✓") ? "text-green-400" : "text-red-400"}`}>{transferMsg}</p>
+                    )}
+
+                    <button
+                      onClick={transferBalance}
+                      disabled={transferLoading || !transferUser.trim() || transferAmount < 1}
+                      className="w-full py-3 rounded-xl font-semibold bg-purple-600 hover:bg-purple-700 disabled:opacity-50 transition"
+                    >
+                      {transferLoading ? "Отправка..." : "Перевести"}
+                    </button>
+                  </div>
                 </div>
               </div>
 
