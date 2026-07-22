@@ -19,6 +19,7 @@ import Footer from "@/components/Footer";
   WarningCircle,
   Minus,
   Plus,
+  User,
 } from "@phosphor-icons/react";
 
 type Me = {
@@ -333,6 +334,29 @@ export default function AdminPage() {
       const data = await res.json();
       if (!res.ok) alert(data.error || "Ошибка");
       else alert("Пароль изменён ✓");
+    } catch {}
+  }
+
+  async function changeUsername(userId: number) {
+    const nick = prompt("Новый ник:");
+    if (!nick || nick.length < 2) return;
+    try {
+      const res = await fetch("/api/admin-users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          admin_token: adminToken,
+          action: "change-username",
+          user_id: userId,
+          new_username: nick,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) alert(data.error || "Ошибка");
+      else {
+        alert("Ник изменён ✓");
+        loadUsers();
+      }
     } catch {}
   }
 
@@ -809,6 +833,13 @@ export default function AdminPage() {
                                   title="Сменить пароль"
                                 >
                                   <Key size={16} />
+                                </button>
+                                <button
+                                  onClick={() => changeUsername(u.id)}
+                                  className="text-cyan-400 hover:text-cyan-300 transition"
+                                  title="Сменить ник"
+                                >
+                                  <User size={16} />
                                 </button>
                               </>
                             )}

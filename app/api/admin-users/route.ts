@@ -4,7 +4,7 @@ import bcrypt from "bcrypt";
 
 export async function POST(req: Request) {
   try {
-    const { admin_token, action, user_id, role, ban_reason, days, new_password } = await req.json();
+    const { admin_token, action, user_id, role, ban_reason, days, new_password, new_username } = await req.json();
 
     if (admin_token !== "euphoria-admin-2024") {
       return NextResponse.json({ error: "Неверный токен" }, { status: 403 });
@@ -78,6 +78,16 @@ export async function POST(req: Request) {
       if (String(new_password).length < 6) return NextResponse.json({ error: "Пароль минимум 6 символов" }, { status: 400 });
       const hash = await bcrypt.hash(String(new_password), 10);
       await query("UPDATE users SET password = $1 WHERE id = $2", [hash, user_id]);
+      return NextResponse.json({ ok: true });
+    }
+
+    if (action === "change-username") {
+      if (!user_id) return NextResponse.json({ error: "Укажите user_id" }, { status: 400 });
+      const { new_username } = body;
+      if (!new_username || String(new_username).length < 2) return NextResponse.json({ error: "Ник минимум 2 символа" }, { status: 400 });
+      const exists = await queryOne("SELECT id FROM users WHERE LOWER(username) = LOWER($1) AND id != $2", [String(new_username), user_id]);
+      if (exists) return NextResponse.json({ error: "Ник уже занят" }, { status: 400 });
+      await query("UPDATE users SET username = $1 WHERE id = $2", [String(new_username), user_id]);
       return NextResponse.json({ ok: true });
     }
 
