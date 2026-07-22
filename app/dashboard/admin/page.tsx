@@ -706,7 +706,7 @@ export default function AdminPage() {
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full text-sm min-w-[1200px]">
                   <thead>
                     <tr className="text-white/40 border-b border-white/10">
                       <th className="text-left py-3 px-2">UID</th>
